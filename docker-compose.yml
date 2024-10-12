@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"  
+    volumes:
+      - ./api:/app
+    networks:
+      - my_network
+
+  tts:
+    build:
+      context: .
+      dockerfile: TTS/Dockerfile
+    ports:
+      - "8082:8082"  
+    volumes:
+      - ./tts:/app
+    networks:
+      - my_network
+
+  stt:
+    build:
+      context: .
+      dockerfile: stt/Dockerfile
+    ports:
+      - "8081:8081"  
+    volumes:
+      - ./stt:/app
+    networks:
+      - my_network
+
+  gpt:
+    build:
+      context: .
+      dockerfile: gpt/Dockerfile
+    ports:
+      - "8001:8001" 
+    volumes:
+      - ./gpt:/app
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge

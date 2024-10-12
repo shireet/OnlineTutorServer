@@ -1,0 +1,37 @@
+# Bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info
+dist/
+build/
+eggs/
+*.egg
+
+# Virtual environment
+venv/
+
+# VSCode
+.vscode/
+
+# Python build
+*.egg-info/
+dist/
+build/
+.eggs/
+*.wheel
+*.tar.gz
+
+# Windows specific
+Thumbs.db
+
+# Ignore api_key.txt files in any directory
+**/api_key.txt
+
+#wav or mp4
+*.wav
+*.mp4
+
