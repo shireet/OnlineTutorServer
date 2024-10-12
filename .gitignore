@@ -34,4 +34,4 @@ Thumbs.db
 #wav or mp4
 *.wav
 *.mp4
-
+*.DS_Store
