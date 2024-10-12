@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from openai import OpenAI
 import os
+import uvicorn
 
 with open("./api_key.txt") as f:
     m_api = f.readline().strip()
@@ -72,6 +73,5 @@ async def handle_text_to_speech(request: TextRequest):
 
 
 if __name__ == '__main__':
-    import uvicorn
     uvicorn.run("tts:app", host="localhost", port=8081, log_level="info", reload=True)
 
