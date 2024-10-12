@@ -35,3 +35,8 @@ Thumbs.db
 *.wav
 *.mp4
 *.DS_Store
+
+#png or jpg
+*.png
+*.jpg
+
