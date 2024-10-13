@@ -17,7 +17,7 @@ payload = {
     "photo_base64": encoded_image
 }
 
-result = requests.post("http://localhost:8000/parameters", json=payload)
+result = requests.post("http://127.0.0.1:5000/parameters", json=payload)
 
 if result.status_code == 200:
     print(result.json())

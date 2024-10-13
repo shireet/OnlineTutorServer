@@ -4,11 +4,11 @@ services:
   api:
     build:
       context: .
-      dockerfile: api/Dockerfile
+      dockerfile: API/Dockerfile
     ports:
-      - "8000:8000"  
+      - "5000:5000"
     volumes:
-      - ./api:/app
+      - ./API:/app
     networks:
       - my_network
 
@@ -17,31 +17,31 @@ services:
       context: .
       dockerfile: TTS/Dockerfile
     ports:
-      - "8082:8082"  
+      - "5003:5003"
     volumes:
-      - ./tts:/app
+      - ./TTS:/app
     networks:
       - my_network
 
   stt:
     build:
       context: .
-      dockerfile: stt/Dockerfile
+      dockerfile: STT/Dockerfile
     ports:
-      - "8081:8081"  
+      - "5002:5002"
     volumes:
-      - ./stt:/app
+      - ./STT:/app
     networks:
       - my_network
 
   gpt:
     build:
       context: .
-      dockerfile: gpt/Dockerfile
+      dockerfile: GPT/Dockerfile
     ports:
-      - "8001:8001" 
+      - "5001:5001"
     volumes:
-      - ./gpt:/app
+      - ./GPT:/app
     networks:
       - my_network
 

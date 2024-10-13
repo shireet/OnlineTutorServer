@@ -4,9 +4,10 @@ from fastapi.responses import JSONResponse
 import aiohttp
 from pydantic import BaseModel
 
-URL_GPT = "http://localhost:8001"
-URL_SST = "http://localhost:8081"
-URL_TTS = "http://localhost:8082"
+URL_GPT = "http://gpt:5001"
+URL_SST = "http://stt:5002"
+URL_TTS = "http://tts:5003"
+
 
 app = FastAPI()
 
@@ -96,4 +97,4 @@ async def parameters(request: ParametersRequest):
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="localhost", port=8000, log_level="info", reload=True)
+    uvicorn.run("api:app", host="0.0.0.0", port=5000, log_level="info", reload=True)

@@ -57,5 +57,5 @@ async def handle_speech_to_text(request: AudioRequest):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 if __name__ == '__main__':
-    uvicorn.run("stt:app", host="localhost", port=8081, log_level="info", reload=True)
+    uvicorn.run("stt:app", host="0.0.0.0", port=5002, log_level="info", reload=True)
 

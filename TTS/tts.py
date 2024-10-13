@@ -73,5 +73,5 @@ async def handle_text_to_speech(request: TextRequest):
 
 
 if __name__ == '__main__':
-    uvicorn.run("tts:app", host="localhost", port=8081, log_level="info", reload=True)
+    uvicorn.run("tts:app", host="0.0.0.0", port=5003, log_level="info", reload=True)
 

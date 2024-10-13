@@ -93,6 +93,6 @@ async def read_root(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run("gpt:app", host="localhost", port=8001, log_level="info", reload=True)
+    uvicorn.run("gpt:app", host="0.0.0.0", port=5001, log_level="info", reload=True)
 
 #add remembering of previous parameteres and make the user visioble when he is asking a question
