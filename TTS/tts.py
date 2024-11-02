@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from openai import OpenAI
 import os
 import uvicorn
+import logging
 
 with open("./api_key.txt") as f:
     m_api = f.readline().strip()
@@ -56,6 +57,7 @@ async def handle_text_to_speech(request: TextRequest):
         text = request.text
         if not text:
             raise HTTPException(status_code=400, detail="Invalid text input")
+        logging.info(text)
 
         audio_file_path = await text_to_speech(text)
         if not audio_file_path:

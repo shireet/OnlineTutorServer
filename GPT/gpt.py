@@ -8,91 +8,106 @@ import base64
 
 app = FastAPI()
 
-
-
 with open("./api_key.txt") as f:
     m_api = f.readline()
 
 MODEL = "gpt-4o-mini"
 
-INTRODUCTION = '''
+
+INTRODUCTION1 = '''
 Your name is Kevin, 
-you are a helpful tutor that assists the student with any subject. Return a Json with a field answer. 
+you are a helpful tutor that assists the student with any subject. 
+if the student asks a question or says a phrase give an answer. Ther response should be in json format with a field 'answer'
+Also you will be sent an image of the student.
 '''
 
 INTRODUCTION2 = '''
 Your name is Kevin, 
-your standing at (15.52,0.25,14.42). You  You are in a room sized Xmin = 10.7, Xmax = 19.7, Ymin = 0.25, Ymax = 6.5, Zmin = 3.15, Zmax = 15.7.
-if the student isn't paying attention show certain emotions like anger, surprise and so on,  and so on, if the student is paying attention and interested show positive emotions).
-Based on the inputs: if the student is looking at the board, at the teacher, their position, their photo (emotion), provide a response indicating:
+you are a helpful tutor that assists the student with any subject. 
+if the student is looking at the board, at the teacher, their position,  their photo (identify their emotional status), provide a response indicating:
 - Where to look (return 1 if you want to look at the user's eyes, 2 if at the user's mouth, 3 if you want to look to the right, 4 if you want to look to the left)
 - Which emotion to display (anger, disgust, fear, happiness, sadness, surprise) and its intensity (0 to 100)
-The answer should be concise. Your response should include: look_direction, emotion, intensity. The response should be in JSON format.
-
+Your response should include: look_direction, emotion, intensity. The response should be in JSON format.
 '''
+
+MEMORY = {
+    "conversation_history": [], 
+    "photo": ""             
+}
 
 client = OpenAI(api_key=m_api)
 
-messages=[{"role": "system", "content": INTRODUCTION}]
+def update_memory(data, flag, response=None):
+    if flag == 1:
+        MEMORY["conversation_history"].append({"user": data["message"], "assistant": response})
+    elif flag == 2:
+        if data.get("photo"):
+            MEMORY["photo"] = data["photo"]
 
 
+async def chatgpt(message_data):
 
-
-
-
-
-async def chatgpt(dictionary: dict):
+    context = [{"role": "system", "content": INTRODUCTION1}]
     
-    messages.append({"role": "user", "content": [{"type": "text", "text": dictionary['message']}] })
+    for exchange in MEMORY["conversation_history"]:
+        context.append({"role": "user", "content": exchange["user"]})
+        context.append({"role": "assistant", "content": exchange["assistant"]})
+    
+    context.append({"role": "user", "content": message_data["message"]})
+
+    context.append({"role": "user", "content": [
+        {"type": "image_url", "image_url": {
+            "url": f"data:image/png;base64,{MEMORY['photo']}"
+            }
+        }
+    ]})
 
     response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            temperature=0.0,
-            response_format={ "type": "json_object" }
-            )
-    
+        model=MODEL,
+        messages=context,
+        temperature=0.0,
+        response_format={"type": "json_object" }
+    )
     output = json.loads(response.choices[0].message.content)
-
-    messages.append({"role": "assistant", "content": [{"type": "text", "text": output['answer']}]})
+    
+    update_memory(message_data, 1, output['answer'])
     
     return output['answer']
 
-async def chatgpt_parameters(dictionary: dict):
+async def chatgpt_parameters(data):
+    update_memory(data,2)
 
-    messages=[{"role": "system", "content": INTRODUCTION2},
-                      {"role": "system", "content": f"Input data: position of student {dictionary['position']}, looking at teacher {dictionary['look_teacher']}, loooking at board {dictionary['look_board']}"},
-                      {"role": "user", "content": [
-                            {"type": "image_url", "image_url": {
-                                    "url": f"data:image/png;base64,{dictionary['photo']}"}
-                            }
-                       ]},
-                ]
+    context = [
+        {"role": "system", "content": INTRODUCTION2},
+        {"role": "system", "content": f"Input data: position {data['position']}, look at teacher {data['look_teacher']}, look at board {data['look_board']}"},
+    ]
+    context.append({"role": "user", "content": [
+        {"type": "image_url", "image_url": {
+            "url": f"data:image/png;base64,{MEMORY['photo']}"
+            }
+        }
+    ]})
+
     response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            temperature=0.0,
-            response_format={ "type": "json_object" }
-            )
-
+        model=MODEL,
+        messages=context,
+        temperature=0.0,
+        response_format={ "type": "json_object" }
+    )
     output = json.loads(response.choices[0].message.content)
     return output
 
-
-
-
 @app.post("/message")
-async def read_root(request: Request):
-    result = await chatgpt(await request.json())
+async def process_message(request: Request):
+    request_data = await request.json()
+    result = await chatgpt(request_data)
     return {"message": result}
 
 @app.post("/messages_parameters")
-async def read_root(request: Request):
-    result = await chatgpt_parameters(await request.json())
+async def process_parameters(request: Request):
+    request_data = await request.json()
+    result = await chatgpt_parameters(request_data)
     return result
-
 
 if __name__ == "__main__":
     uvicorn.run("gpt:app", host="0.0.0.0", port=5001, log_level="info", reload=True)
-
-#add remembering of previous parameteres and make the user visioble when he is asking a question
