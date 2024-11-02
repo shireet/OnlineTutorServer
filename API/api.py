@@ -3,6 +3,9 @@ import uvicorn
 from fastapi.responses import JSONResponse
 import aiohttp
 from pydantic import BaseModel
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 URL_GPT = "http://gpt:5001"
 URL_SST = "http://stt:5002"
@@ -38,6 +41,7 @@ async def speech(request: AudioRequest):
         audio_data = request.audio_base64        
         if not audio_data:
             raise HTTPException(status_code=400, detail="Invalid base64 audio data")
+        
 
         # STT
         stt_response_data = await post_request(f"{URL_SST}/transcribe/", {"audio_base64": audio_data})
@@ -66,7 +70,6 @@ async def speech(request: AudioRequest):
 @app.post("/parameters")
 async def parameters(request: ParametersRequest):
     try:
-        
         if not request:
             raise HTTPException(status_code=400, detail="Invalid request data")
         
@@ -77,7 +80,7 @@ async def parameters(request: ParametersRequest):
             raise HTTPException(status_code=400, detail="Invalid base64 photo data")
         if request.is_looking_teacher is None or request.is_looking_board is None:
             raise HTTPException(status_code=400, detail="Invalid looking status")
-        print("hi")
+        
         
         gpt_response_data = await post_request(f"{URL_GPT}/messages_parameters", {
             "position": request.position,
