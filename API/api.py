@@ -15,7 +15,7 @@ URL_TTS = "http://tts:5003"
 app = FastAPI()
 
 class AudioRequest(BaseModel):
-    audio_base64: str
+    text_question: str
     
 class ParametersRequest(BaseModel):
     position: dict
@@ -23,10 +23,21 @@ class ParametersRequest(BaseModel):
     is_looking_teacher: bool
     is_looking_board: bool
 
+class TextRequest(BaseModel):
+    text_question: str
+
 
 async def post_request(url: str, data: dict):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, json=data) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                raise HTTPException(status_code=response.status, detail=await response.text())
+
+async def get_request(url:str):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
             if response.status == 200:
                 return await response.json()
             else:
@@ -38,7 +49,7 @@ async def speech(request: AudioRequest):
     try:
         if not request:
             raise HTTPException(status_code=400, detail="Invalid request data")   
-        audio_data = request.audio_base64        
+        audio_data = request.text_question        
         if not audio_data:
             raise HTTPException(status_code=400, detail="Invalid base64 audio data")
         
@@ -55,7 +66,7 @@ async def speech(request: AudioRequest):
         if not gpt_response_text:
             raise HTTPException(status_code=500, detail="No message returned from GPT")
 
-        # TT
+        # TTS
         tts_response_data = await post_request(f"{URL_TTS}/speech", {"text": gpt_response_text})
         tts_audio_base64 = tts_response_data.get('audio_base64')
         if not tts_audio_base64:
@@ -66,6 +77,40 @@ async def speech(request: AudioRequest):
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+    
+@app.post("/text")
+async def text(request: TextRequest):
+    try:
+        if not request.text_question:
+            raise HTTPException(status_code=400, detail="Invalid text data")
+    
+        # GPT
+        gpt_response_data = await post_request(f"{URL_GPT}/message", {"message": request.text_question})
+        gpt_response_text = gpt_response_data.get('message')
+        if not gpt_response_text:
+            raise HTTPException(status_code=500, detail="No message returned from GPT")
+        
+        # TTS
+        tts_response_data = await post_request(f"{URL_TTS}/speech", {"text": gpt_response_text})
+        tts_audio_base64 = tts_response_data.get('audio_base64')
+        if not tts_audio_base64:
+            raise HTTPException(status_code=500, detail="No audio returned from TTS")
+
+        return JSONResponse(content={"audio_base64": tts_audio_base64})
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.get("/reset")
+async def reset():
+    try:
+        reset_status = await post_request(f"{URL_GPT}/reset")
+        return JSONResponse(content=reset_status)
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
     
 @app.post("/parameters")
 async def parameters(request: ParametersRequest):

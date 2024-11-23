@@ -109,5 +109,12 @@ async def process_parameters(request: Request):
     result = await chatgpt_parameters(request_data)
     return result
 
+@app.get("/reset")
+async def reset():
+    MEMORY["conversation_history"].clear()
+    MEMORY["photo"] = ""
+    return {"message": "Memory has been reset successfully."}
+
+
 if __name__ == "__main__":
     uvicorn.run("gpt:app", host="0.0.0.0", port=5001, log_level="info", reload=True)
