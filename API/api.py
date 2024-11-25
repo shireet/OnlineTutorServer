@@ -105,7 +105,7 @@ async def text(request: TextRequest):
 @app.get("/reset")
 async def reset():
     try:
-        reset_status = await post_request(f"{URL_GPT}/reset")
+        reset_status = await get_request(f"{URL_GPT}/reset")
         return JSONResponse(content=reset_status)
     except Exception as e:
         print(f"Error: {e}")
