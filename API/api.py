@@ -62,7 +62,9 @@ async def speech(request: AudioRequest):
 
         # GPT
         gpt_response_data = await post_request(f"{URL_GPT}/message", {"message": audio_text})
-        gpt_response_text = gpt_response_data.get('message')
+        logging.info(gpt_response_data)
+        gpt_response_text = gpt_response_data.get('speech')
+        gpt_response_board = gpt_response_data.get('board')
         if not gpt_response_text:
             raise HTTPException(status_code=500, detail="No message returned from GPT")
 
@@ -72,7 +74,7 @@ async def speech(request: AudioRequest):
         if not tts_audio_base64:
             raise HTTPException(status_code=500, detail="No audio returned from TTS")
 
-        return JSONResponse(content={"audio_base64": tts_audio_base64})
+        return JSONResponse(content={"audio_base64": tts_audio_base64, "board": gpt_response_board})
 
     except Exception as e:
         print(f"Error: {e}")
@@ -87,9 +89,11 @@ async def text(request: TextRequest):
     
         # GPT
         gpt_response_data = await post_request(f"{URL_GPT}/message", {"message": request.text_question})
-        gpt_response_text = gpt_response_data.get('message')
+        gpt_response_text = gpt_response_data.get('speech')
+        gpt_response_board = gpt_response_data.get('board')
         if not gpt_response_text:
             raise HTTPException(status_code=500, detail="No message returned from GPT")
+        logging.info(gpt_response_data)
         
         # TTS
         tts_response_data = await post_request(f"{URL_TTS}/speech", {"text": gpt_response_text})
@@ -97,7 +101,7 @@ async def text(request: TextRequest):
         if not tts_audio_base64:
             raise HTTPException(status_code=500, detail="No audio returned from TTS")
 
-        return JSONResponse(content={"audio_base64": tts_audio_base64})
+        return JSONResponse(content={"audio_base64": tts_audio_base64,"board": gpt_response_board})
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")

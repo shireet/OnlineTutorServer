@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from openai import OpenAI
 import uvicorn
+import logging
 
 with open("./api_key.txt") as f:
     m_api = f.readline().strip()
@@ -49,6 +50,7 @@ async def handle_speech_to_text(request: AudioRequest):
 
         if transcription is None:
             raise HTTPException(status_code=500, detail="Failed to transcribe audio")
+        logging.info(transcription)
 
         return JSONResponse(content={"text": transcription})
 
