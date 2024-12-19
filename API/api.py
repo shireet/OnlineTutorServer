@@ -4,6 +4,10 @@ from fastapi.responses import JSONResponse
 import aiohttp
 from pydantic import BaseModel
 import logging
+import grpc
+import stt_service_pb2
+import stt_service_pb2_grpc
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,10 +16,11 @@ URL_SST = "http://stt:5002"
 URL_TTS = "http://tts:5003"
 
 
+
 app = FastAPI()
 
 class AudioRequest(BaseModel):
-    text_question: str
+    audio_base64: str
     
 class ParametersRequest(BaseModel):
     position: dict
@@ -44,12 +49,12 @@ async def get_request(url:str):
                 raise HTTPException(status_code=response.status, detail=await response.text())
 
 
-@app.post("/speech")
-async def speech(request: AudioRequest):
+@app.post("/{client_id}/speech")
+async def speech(client_id: int, request: AudioRequest):
     try:
         if not request:
             raise HTTPException(status_code=400, detail="Invalid request data")   
-        audio_data = request.text_question        
+        audio_data = request.audio_base64     
         if not audio_data:
             raise HTTPException(status_code=400, detail="Invalid base64 audio data")
         
@@ -61,7 +66,7 @@ async def speech(request: AudioRequest):
             raise HTTPException(status_code=500, detail="No text returned from STT")
 
         # GPT
-        gpt_response_data = await post_request(f"{URL_GPT}/message", {"message": audio_text})
+        gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/message", {"message": audio_text})
         logging.info(gpt_response_data)
         gpt_response_text = gpt_response_data.get('speech')
         gpt_response_board = gpt_response_data.get('board')
@@ -81,14 +86,14 @@ async def speech(request: AudioRequest):
         raise HTTPException(status_code=500, detail="Internal Server Error")
     
     
-@app.post("/text")
-async def text(request: TextRequest):
+@app.post("/{client_id}/text")
+async def text(client_id: int, request: TextRequest):
     try:
         if not request.text_question:
             raise HTTPException(status_code=400, detail="Invalid text data")
     
         # GPT
-        gpt_response_data = await post_request(f"{URL_GPT}/message", {"message": request.text_question})
+        gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/message", {"message": request.text}) #!!!
         gpt_response_text = gpt_response_data.get('speech')
         gpt_response_board = gpt_response_data.get('board')
         if not gpt_response_text:
@@ -106,18 +111,18 @@ async def text(request: TextRequest):
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.get("/reset")
-async def reset():
+@app.get("/{client_id}/reset")
+async def reset(client_id: int):
     try:
-        reset_status = await get_request(f"{URL_GPT}/reset")
+        reset_status = await get_request(f"{URL_GPT}/{client_id}/reset")
         return JSONResponse(content=reset_status)
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
     
-@app.post("/parameters")
-async def parameters(request: ParametersRequest):
+@app.post("{client_id}/parameters")
+async def parameters(client_id: int, request: ParametersRequest):
     try:
         if not request:
             raise HTTPException(status_code=400, detail="Invalid request data")
@@ -131,12 +136,9 @@ async def parameters(request: ParametersRequest):
             raise HTTPException(status_code=400, detail="Invalid looking status")
         
         
-        gpt_response_data = await post_request(f"{URL_GPT}/messages_parameters", {
-            "position": request.position,
-            "look_teacher": request.is_looking_teacher,
-            "look_board": request.is_looking_board,
-            "photo": request.photo_base64
-        })
+        gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/messages_parameters", request) #!!!
+
+
         if not gpt_response_data:
             raise HTTPException(status_code=500, detail="No message returned from GPT")
         return JSONResponse(content=gpt_response_data)
