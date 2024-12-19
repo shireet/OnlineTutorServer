@@ -4,9 +4,7 @@ from fastapi.responses import JSONResponse
 import aiohttp
 from pydantic import BaseModel
 import logging
-import grpc
-import stt_service_pb2
-import stt_service_pb2_grpc
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -43,6 +41,14 @@ async def post_request(url: str, data: dict):
 async def get_request(url:str):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                raise HTTPException(status_code=response.status, detail=await response.text())
+
+async def delete_request(url:str):
+    async with aiohttp.ClientSession() as session:
+        async with session.delete(url) as response:
             if response.status == 200:
                 return await response.json()
             else:
@@ -111,7 +117,7 @@ async def text(client_id: int, request: TextRequest):
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.get("/{client_id}/reset")
+@app.delete("/{client_id}/reset")
 async def reset(client_id: int):
     try:
         reset_status = await get_request(f"{URL_GPT}/{client_id}/reset")
@@ -119,9 +125,17 @@ async def reset(client_id: int):
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+@app.delete("/{client_id}/remove")
+async def remove(client_id:int):
+    try:
+        remove_status = await delete_request(f"{URL_GPT}/{client_id}/remove")
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
     
-@app.post("{client_id}/parameters")
+@app.post("/{client_id}/parameters")
 async def parameters(client_id: int, request: ParametersRequest):
     try:
         if not request:
@@ -135,8 +149,10 @@ async def parameters(client_id: int, request: ParametersRequest):
         if request.is_looking_teacher is None or request.is_looking_board is None:
             raise HTTPException(status_code=400, detail="Invalid looking status")
         
+        request_data = request.model_dump()
         
-        gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/messages_parameters", request) #!!!
+    
+        gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/messages_parameters", request_data) #!!!
 
 
         if not gpt_response_data:

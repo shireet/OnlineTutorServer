@@ -95,12 +95,21 @@ async def process_parameters(client_id: int, request: Request):
     result = await chatgpt_parameters(client_id, request_data)
     return result
 
-@app.get("/{client_id}/reset")
+@app.delete("/{client_id}/reset")
 async def reset(client_id: int):
     memory = get_memory(client_id)
     memory["conversation_history"].clear()
     memory["photo"] = ""
     return {"message": "Memory has been reset successfully."}
+
+
+@app.delete("/{client_id}/remove")
+async def remove_client(client_id: int):
+    if client_id in client_memories:
+        del client_memories[client_id]
+        return {"message": f"Client {client_id} has been removed successfully."}
+    raise HTTPException(status_code=404, detail="Client not found.")
+
 
 if __name__ == "__main__":
     uvicorn.run("gpt:app", host="0.0.0.0", port=5001, log_level="info", reload=True)
