@@ -120,7 +120,7 @@ async def text(client_id: int, request: TextRequest):
 @app.delete("/{client_id}/reset")
 async def reset(client_id: int):
     try:
-        reset_status = await get_request(f"{URL_GPT}/{client_id}/reset")
+        reset_status = await delete_request(f"{URL_GPT}/{client_id}/reset")
         return JSONResponse(content=reset_status)
     except Exception as e:
         print(f"Error: {e}")
