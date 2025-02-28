@@ -26,7 +26,7 @@ async def text_to_speech(input_text: str, model: str = "tts-1", voice: str = "on
             input=input_text
         ) as response:
             audio_path = './audio/'
-            os.makedirs(audio_path, exist_ok=True)  # Ensure the directory exists
+            os.makedirs(audio_path, exist_ok=True)  
             
             with tempfile.NamedTemporaryFile(prefix='ans_', 
                                              suffix='.wav', 
@@ -43,7 +43,6 @@ async def encode_audio_to_base64(audio_file_path: str) -> str:
     try:
         with open(audio_file_path, "rb") as audio_file:
             audio_data = audio_file.read()
-            # Encode the audio data as base64
             encoded_audio = base64.b64encode(audio_data).decode("utf-8")
             return encoded_audio
     except Exception as e:

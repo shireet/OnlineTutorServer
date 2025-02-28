@@ -99,7 +99,7 @@ async def text(client_id: int, request: TextRequest):
             raise HTTPException(status_code=400, detail="Invalid text data")
     
         # GPT
-        gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/message", {"message": request.text}) #!!!
+        gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/message", {"message": request.text_question}) 
         gpt_response_text = gpt_response_data.get('speech')
         gpt_response_board = gpt_response_data.get('board')
         if not gpt_response_text:
