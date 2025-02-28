@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 5001
 
-CMD ["python", "gpt.py"]
+CMD ["python","-u", "gpt.py"]

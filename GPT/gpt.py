@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 import uvicorn
 from openai import OpenAI
 import json
+import logging
 
 app = FastAPI()
 
@@ -24,7 +25,7 @@ def get_memory(client_id):
     if client_id not in client_memories:
         client_memories[client_id] = {
             "conversation_history": [], 
-            "photo": ""
+            "photo_base64": ""
         }
     return client_memories[client_id]
 
@@ -61,7 +62,6 @@ async def chatgpt(client_id, message_data):
 
 async def chatgpt_parameters(client_id, data):
     update_memory(client_id, data, 2)
-
     memory = get_memory(client_id)
     context = [
         {"role": "system", "content": INTRODUCTION_NOT_VERBAL},
@@ -69,11 +69,10 @@ async def chatgpt_parameters(client_id, data):
     ]
     context.append({"role": "user", "content": [
         {"type": "image_url", "image_url": {
-            "url": f"data:image/png;base64,{memory['photo']}"
+            "url": f"data:image/png;base64,{memory['photo_base64']}"
             }
         }
     ]})
-
     response = client.chat.completions.create(
         model=MODEL,
         messages=context,

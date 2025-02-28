@@ -150,7 +150,7 @@ async def parameters(client_id: int, request: ParametersRequest):
             raise HTTPException(status_code=400, detail="Invalid looking status")
         
         request_data = request.model_dump()
-        
+
     
         gpt_response_data = await post_request(f"{URL_GPT}/{client_id}/messages_parameters", request_data) #!!!
 
